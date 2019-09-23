@@ -250,5 +250,6 @@ int64_t npu2_map_lpar(struct phb *phb, uint64_t bdf, uint64_t lparid,
 		      uint64_t lpcr);
 int64_t npu2_set_relaxed_order(struct phb *phb, uint32_t gcid, int pec,
 			       bool enable);
+struct dt_node *npu2_create_memory_dn(uint64_t addr, uint64_t size);
 
 #endif /* __NPU2_H */

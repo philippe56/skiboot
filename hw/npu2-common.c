@@ -673,3 +673,27 @@ void probe_npu2(void)
 		setup_devices(npu);
 	}
 }
+
+struct dt_node *npu2_create_memory_dn(uint64_t addr, uint64_t size)
+{
+	struct dt_node *mem;
+	static u32 chip_id = 255;
+
+	mem = dt_find_by_name_addr(dt_root, "memory", addr);
+	if (mem)
+		return mem;
+
+	mem = dt_new_addr(dt_root, "memory", addr);
+	if (!mem)
+		return NULL;
+	dt_add_property_string(mem, "device_type", "memory");
+	dt_add_property_string(mem, "compatible", "ibm,coherent-device-memory");
+	dt_add_property_u64s(mem, "reg", addr, size);
+	dt_add_property_cells(mem, "ibm,chip-id", chip_id);
+	dt_add_property_u64s(mem, "linux,usable-memory", addr, 0);
+	dt_add_property_cells(mem, "ibm,associativity", 4, chip_id, chip_id, chip_id, chip_id);
+	chip_id--;
+
+	assert(chip_id);
+	return mem;
+}

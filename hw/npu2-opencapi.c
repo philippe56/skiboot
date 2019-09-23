@@ -1639,9 +1639,10 @@ static void setup_debug_training_state(struct npu2_dev *dev)
 
 static void setup_device(struct npu2_dev *dev)
 {
-	struct dt_node *dn_phb;
+	struct dt_node *dn_phb, *dn_mem;
 	struct pci_slot *slot;
 	uint64_t mm_win[2];
+	uint64_t phys_map_base, phys_map_size;
 
 	/* Populate PHB device node */
 	phys_map_get(dev->npu->chip_id, NPU_OCAPI_MMIO, dev->brick_index, &mm_win[0],
@@ -1671,6 +1672,12 @@ static void setup_device(struct npu2_dev *dev)
 	dt_add_property_cells(dn_phb, "ibm,links", 1);
 	dt_add_property(dn_phb, "ibm,mmio-window", mm_win, sizeof(mm_win));
 	dt_add_property_cells(dn_phb, "ibm,phb-diag-data-size", 0);
+
+	phys_map_get(dev->npu->chip_id, OCAPI_MEM, 0, &phys_map_base,
+		     &phys_map_size);
+	dn_mem = npu2_create_memory_dn(phys_map_base, phys_map_size);
+	assert(dn_mem);
+	dt_add_property_cells(dn_phb, "memory-region", dn_mem->phandle);
 
 	/*
 	 * We ignore whatever PE numbers Linux tries to set, so we just
