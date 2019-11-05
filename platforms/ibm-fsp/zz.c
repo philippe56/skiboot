@@ -123,6 +123,38 @@ static void add_opencapi_dt_nodes(void)
 	}
 }
 
+static void add_opencapi_i2c_bus(void)
+{
+	struct dt_node *xscom, *i2cm, *i2c_bus;
+
+	prlog(PR_DEBUG, "OCAPI: checking I2C bus device node for OCAPI reset\n");
+	dt_for_each_compatible(dt_root, xscom, "ibm,xscom") {
+		i2cm = dt_find_by_name(xscom, "i2cm@a1000");
+		if (!i2cm) {
+			prlog(PR_DEBUG, "OCAPI: Adding master @a1000\n");
+			i2cm = dt_new(xscom, "i2cm@a1000");
+			dt_add_property_cells(i2cm, "reg", 0xa1000, 0x1000);
+			dt_add_property_strings(i2cm, "compatible",
+						"ibm,power8-i2cm", "ibm,power9-i2cm");
+			dt_add_property_cells(i2cm, "#size-cells", 0x0);
+			dt_add_property_cells(i2cm, "#address-cells", 0x1);
+			dt_add_property_cells(i2cm, "chip-engine#", 0x1);
+			dt_add_property_cells(i2cm, "clock-frequency", 0x7735940);
+		}
+
+		if (dt_find_by_name(i2cm, "i2c-bus@4"))
+			continue;
+
+		prlog(PR_DEBUG, "OCAPI: Adding bus 4\n");
+		i2c_bus = dt_new_addr(i2cm, "i2c-bus", 4);
+		dt_add_property_cells(i2c_bus, "reg", 4);
+		dt_add_property_cells(i2c_bus, "bus-frequency", 0x61a80);
+		dt_add_property_strings(i2c_bus, "compatible",
+					"ibm,opal-i2c", "ibm,power8-i2c-port",
+					"ibm,power9-i2c-port");
+	}
+}
+
 static bool zz_probe(void)
 {
 	/* FIXME: make this neater when the dust settles */
@@ -135,6 +167,7 @@ static bool zz_probe(void)
 	    dt_node_is_compatible(dt_root, "ibm,zz-2s4u+gen4")) {
 
 		add_opencapi_dt_nodes();
+		add_opencapi_i2c_bus();
 		return true;
 	}
 
